@@ -96,7 +96,7 @@ pub async fn health() -> Json<SpaceResponse> {
         ok: true,
         data: Some(json!({
             "status": "healthy",
-            "service": "cassiopeia-space",
+            "service": "kosmostars-space",
             "version": env!("CARGO_PKG_VERSION"),
         })),
         error: None,

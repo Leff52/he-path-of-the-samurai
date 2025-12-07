@@ -19,7 +19,7 @@ impl<R: IssRepository> IssService<R> {
     pub fn new(iss_repo: Arc<R>, iss_url: String) -> Self {
         let http_client = reqwest::Client::builder()
             .timeout(std::time::Duration::from_secs(20))
-            .user_agent("Cassiopeia-Space/1.0")
+            .user_agent("KosmoStars-Space/1.0")
             .build()
             .expect("Failed to build HTTP client");
 

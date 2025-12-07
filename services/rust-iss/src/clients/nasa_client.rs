@@ -18,7 +18,7 @@ impl NasaClient {
     pub fn new(api_key: String, base_url_osdr: String, rate_limit_rpm: u32) -> Self {
         let client = Client::builder()
             .timeout(Duration::from_secs(30))
-            .user_agent("Cassiopeia-Space/1.0")
+            .user_agent("KosmoStars-Space/1.0")
             .gzip(true)
             .brotli(true)
             .build()

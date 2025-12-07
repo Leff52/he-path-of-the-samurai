@@ -188,8 +188,8 @@ INSERT INTO cms_blocks (slug, title, content, is_active) VALUES
 </div>', TRUE),
 ('dashboard_info', 'Информация о платформе', 
 '<div class="alert alert-primary">
-    <h5><i class="bi bi-info-circle"></i> О платформе Cassiopeia</h5>
-    <p>Cassiopeia — это распределённая платформа для агрегации космических данных.</p>
+    <h5><i class="bi bi-info-circle"></i> О платформе KosmoStars</h5>
+    <p>KosmoStars — это распределённая платформа для агрегации космических данных.</p>
     <p>Архитектура: Rust (backend API) + PHP/Laravel (frontend) + PostgreSQL + Redis</p>
 </div>', TRUE)
 ON CONFLICT (slug) DO NOTHING;

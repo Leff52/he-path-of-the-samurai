@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token() }}">
-  <title>Cassiopeia — Space Data Platform</title>
+  <title>KosmoStars — Space Data Platform</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -26,7 +26,7 @@
   <div class="container">
     <a class="navbar-brand d-flex align-items-center" href="/dashboard">
       <i class="bi bi-stars me-2 text-space"></i>
-      <span>Cassiopeia</span>
+      <span>KosmoStars</span>
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
       <span class="navbar-toggler-icon"></span>
@@ -77,7 +77,7 @@
 </main>
 
 <footer class="text-center text-muted py-4 mt-5 border-top">
-  <small>Cassiopeia Space Data Platform &copy; {{ date('Y') }}</small>
+  <small>KosmoStars Space Data Platform &copy; {{ date('Y') }}</small>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

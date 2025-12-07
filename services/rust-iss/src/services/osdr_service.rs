@@ -15,7 +15,7 @@ impl<R: OsdrRepository> OsdrService<R> {
     pub fn new(repo: Arc<R>, osdr_url: String) -> Self {
         let http_client = reqwest::Client::builder()
             .timeout(std::time::Duration::from_secs(30))
-            .user_agent("Cassiopeia-Space/1.0")
+            .user_agent("KosmoStars-Space/1.0")
             .gzip(true)
             .build()
             .expect("Failed to build HTTP client");

@@ -16,7 +16,7 @@ impl<C: CacheRepository> SpaceService<C> {
     pub fn new(cache_repo: Arc<C>, nasa_key: String) -> Self {
         let http_client = reqwest::Client::builder()
             .timeout(std::time::Duration::from_secs(30))
-            .user_agent("Cassiopeia-Space/1.0")
+            .user_agent("KosmoStars-Space/1.0")
             .gzip(true)
             .brotli(true)
             .build()

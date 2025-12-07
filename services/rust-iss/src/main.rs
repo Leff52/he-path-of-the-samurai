@@ -1,5 +1,4 @@
-//! Cassiopeia Space Data Platform - Rust Backend
-//!
+//! KosmoStars Space Data Platform - Rust Backend
 //! Модульная архитектура:
 //! - config/     - конфигурация приложения
 //! - domain/     - доменные модели
