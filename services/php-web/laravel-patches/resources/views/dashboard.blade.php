@@ -118,7 +118,11 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
     
     const map = L.map('map', { attributionControl:false }).setView([lat0||0, lon0||0], lat0?3:2);
-    L.tileLayer('https://{s}.tile.openstreetmap.de/{z}/{x}/{y}.png', { noWrap:true }).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      noWrap: true,
+      maxZoom: 19,
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
     
     // Массивы для хранения истории точек
     let trajectoryPoints = lat0 && lon0 ? [[lat0, lon0]] : [];
@@ -378,7 +382,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                 <input type="number" step="0.0001" class="form-control form-control-sm" name="lon" value="37.6176" placeholder="lon">
               </div>
               <div class="col-auto">
-                <input type="number" min="1" max="30" class="form-control form-control-sm" name="days" value="7" style="width:90px" title="дней">
+                <input type="number" min="1" max="365" class="form-control form-control-sm" name="days" value="365" style="width:80px" title="дней">
+              </div>
+              <div class="col-auto">
+                <input type="number" min="1" max="50" class="form-control form-control-sm" name="limit" value="5" style="width:70px" title="лимит">
               </div>
               <div class="col-auto">
                 <button class="btn btn-sm btn-primary" type="submit">Показать</button>
@@ -411,51 +418,104 @@ document.addEventListener('DOMContentLoaded', async function () {
         const body = document.getElementById('astroBody');
         const raw  = document.getElementById('astroRaw');
 
-        function normalize(node){
-          const name = node.name || node.body || node.object || node.target || '';
-          const type = node.type || node.event_type || node.category || node.kind || '';
-          const when = node.time || node.date || node.occursAt || node.peak || node.instant || '';
-          const extra = node.magnitude || node.mag || node.altitude || node.note || '';
-          return {name, type, when, extra};
+        function formatDate(dateStr) {
+          if (!dateStr) return '—';
+          try {
+            const d = new Date(dateStr);
+            return d.toLocaleString('ru-RU', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              timeZone: 'UTC',
+              timeZoneName: 'short'
+            });
+          } catch {
+            return dateStr;
+          }
         }
 
-        function collect(root){
-          const rows = [];
-          (function dfs(x){
-            if (!x || typeof x !== 'object') return;
-            if (Array.isArray(x)) { x.forEach(dfs); return; }
-            if ((x.type || x.event_type || x.category) && (x.name || x.body || x.object || x.target)) {
-              rows.push(normalize(x));
-            }
-            Object.values(x).forEach(dfs);
-          })(root);
-          return rows;
+        function parseEvents(data) {
+          const events = [];
+          
+          if (data && data.data && data.data.rows) {
+            data.data.rows.forEach(row => {
+              const bodyName = row.body?.name || row.body?.id || 'Unknown';
+              
+              if (row.events && Array.isArray(row.events)) {
+                row.events.forEach(event => {
+                  let eventDate = event.date || event.time;
+                  
+                  if (!eventDate && event.eventHighlights?.peak?.date) {
+                    eventDate = event.eventHighlights.peak.date;
+                  }
+                  
+                  let extra = '';
+                  if (event.extraInfo && event.extraInfo.obscuration !== undefined) {
+                    // Obscuration в процентах (0.8 -> 80%)
+                    extra = `Покрытие: ${Math.round(event.extraInfo.obscuration * 100)}%`;
+                  } else if (event.altitude !== undefined) {
+                    extra = `Alt: ${event.altitude}°`;
+                  } else if (event.magnitude !== undefined) {
+                    extra = `Mag: ${event.magnitude}`;
+                  } else if (event.note) {
+                    extra = event.note;
+                  } else if (event.eventHighlights) {
+                    const peakAlt = event.eventHighlights.peak?.altitude;
+                    if (peakAlt !== undefined) {
+                      extra = `Высота пика: ${peakAlt.toFixed(1)}°`;
+                    }
+                  }
+                  
+                  events.push({
+                    body: bodyName,
+                    type: event.type || event.event_type || '—',
+                    date: eventDate || '—',
+                    extra: extra
+                  });
+                });
+              }
+            });
+          }
+          
+          return events;
         }
 
         async function load(q){
           body.innerHTML = '<tr><td colspan="5" class="text-muted">Загрузка…</td></tr>';
           const url = '/api/astro/events?' + new URLSearchParams(q).toString();
+          const limit = parseInt(q.limit) || 5;
           try{
             const r  = await fetch(url);
             const js = await r.json();
             raw.textContent = JSON.stringify(js, null, 2);
 
-            const rows = collect(js);
-            if (!rows.length) {
+            const events = parseEvents(js);
+            
+            if (!events.length) {
               body.innerHTML = '<tr><td colspan="5" class="text-muted">события не найдены</td></tr>';
               return;
             }
-            body.innerHTML = rows.slice(0,200).map((r,i)=>`
+            
+            body.innerHTML = events.slice(0, limit).map((evt, i) => `
               <tr>
-                <td>${i+1}</td>
-                <td>${r.name || '—'}</td>
-                <td>${r.type || '—'}</td>
-                <td><code>${r.when || '—'}</code></td>
-                <td>${r.extra || ''}</td>
+                <td>${i + 1}</td>
+                <td><strong>${evt.body}</strong></td>
+                <td>${evt.type.replace(/_/g, ' ')}</td>
+                <td><code class="small">${formatDate(evt.date)}</code></td>
+                <td><span class="small text-muted">${evt.extra}</span></td>
               </tr>
             `).join('');
+            
+            if (events.length > limit) {
+              body.innerHTML += `<tr><td colspan="5" class="text-center text-muted small">
+                Показано ${limit} из ${events.length} событий. Увеличьте лимит для просмотра остальных.
+              </td></tr>`;
+            }
           }catch(e){
-            body.innerHTML = '<tr><td colspan="5" class="text-danger">ошибка загрузки</td></tr>';
+            console.error('AstronomyAPI error:', e);
+            body.innerHTML = '<tr><td colspan="5" class="text-danger">Ошибка загрузки: ' + e.message + '</td></tr>';
           }
         }
 
@@ -466,8 +526,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         });
 
         // автозагрузка
-        load({lat: form.lat.value, lon: form.lon.value, days: form.days.value});
+        load({lat: form.lat.value, lon: form.lon.value, days: form.days.value, limit: form.limit.value});
       });
+    </script>
     </script>
 
 

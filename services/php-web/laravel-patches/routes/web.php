@@ -43,6 +43,8 @@ Route::get('/api/jwst/feed', [DashboardController::class, 'jwstFeed']);
 
 // Астрономические события
 Route::get('/api/astro/events', [AstroController::class, 'events']);
+Route::get('/api/astro/positions', [AstroController::class, 'positions']);
+Route::get('/api/astro/debug', [AstroController::class, 'debug']);
 
 // CMS страницы
 Route::get('/page/{slug}', [CmsController::class, 'page'])
