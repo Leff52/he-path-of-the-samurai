@@ -15,39 +15,48 @@ class AstroController extends Controller
         $from = now('UTC')->toDateString();
         $to   = now('UTC')->addDays($days)->toDateString();
 
-        $appId  = env('ASTRO_APP_ID', '');
-        $secret = env('ASTRO_APP_SECRET', '');
-        if ($appId === '' || $secret === '') {
-            return response()->json(['error' => 'Missing ASTRO_APP_ID/ASTRO_APP_SECRET'], 500);
-        }
+        $mockEvents = [
+            'data' => [
+                'events' => [
+                    [
+                        'name' => 'Полнолуние',
+                        'body' => 'Луна',
+                        'type' => 'Фаза Луны',
+                        'date' => now()->addDays(2)->format('Y-m-d H:i'),
+                        'magnitude' => '-12.7'
+                    ],
+                    [
+                        'name' => 'Венера в максимальной яркости',
+                        'body' => 'Венера',
+                        'type' => 'Планетарное событие',
+                        'date' => now()->addDays(5)->format('Y-m-d H:i'),
+                        'magnitude' => '-4.6'
+                    ],
+                    [
+                        'name' => 'Юпитер в оппозиции',
+                        'body' => 'Юпитер',
+                        'type' => 'Планетарное событие',
+                        'date' => now()->addDays(7)->format('Y-m-d H:i'),
+                        'magnitude' => '-2.8'
+                    ],
+                    [
+                        'name' => 'Марс достигает апогея',
+                        'body' => 'Марс',
+                        'type' => 'Орбитальное событие',
+                        'time' => now()->addDays(10)->format('Y-m-d H:i'),
+                        'altitude' => '45°'
+                    ],
+                    [
+                        'name' => 'Меркурий в восточной элонгации',
+                        'body' => 'Меркурий',
+                        'type' => 'Видимость планеты',
+                        'date' => now()->addDays(12)->format('Y-m-d H:i'),
+                        'note' => 'Лучшее время для наблюдения'
+                    ]
+                ]
+            ]
+        ];
 
-        $auth = base64_encode($appId . ':' . $secret);
-        $url  = 'https://api.astronomyapi.com/api/v2/bodies/events?' . http_build_query([
-            'latitude'  => $lat,
-            'longitude' => $lon,
-            'from'      => $from,
-            'to'        => $to,
-        ]);
-
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER     => [
-                'Authorization: Basic ' . $auth,
-                'Content-Type: application/json',
-                'User-Agent: monolith-iss/1.0'
-            ],
-            CURLOPT_TIMEOUT        => 25,
-        ]);
-        $raw  = curl_exec($ch);
-        $code = curl_getinfo($ch, CURLINFO_RESPONSE_CODE) ?: 0;
-        $err  = curl_error($ch);
-        curl_close($ch);
-
-        if ($raw === false || $code >= 400) {
-            return response()->json(['error' => $err ?: ("HTTP " . $code), 'code' => $code, 'raw' => $raw], 403);
-        }
-        $json = json_decode($raw, true);
-        return response()->json($json ?? ['raw' => $raw]);
+        return response()->json($mockEvents);
     }
 }

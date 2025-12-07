@@ -118,9 +118,9 @@ services:
       GEN_PERIOD_SEC: ${PAS_LEGACY_PERIOD:-300}
       PGHOST: db
       PGPORT: 5432
-      PGUSER: monouser
-      PGPASSWORD: monopass
-      PGDATABASE: monolith
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: iss_osdr
     depends_on:
       db:
         condition: service_healthy

@@ -160,6 +160,40 @@ CREATE TRIGGER update_cms_pages_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
+-- Таблица CMS блоков для динамических вставок на страницах
+CREATE TABLE IF NOT EXISTS cms_blocks (
+    id SERIAL PRIMARY KEY,
+    slug VARCHAR(255) UNIQUE NOT NULL,
+    title VARCHAR(500),
+    content TEXT NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_cms_blocks_slug ON cms_blocks(slug) WHERE is_active = TRUE;
+
+-- Вставка демо-данных для CMS блоков
+INSERT INTO cms_blocks (slug, title, content, is_active) VALUES
+('dashboard_experiment', 'Экспериментальный блок Dashboard', 
+'<div class="alert alert-info">
+    <h5><i class="bi bi-flask"></i> Экспериментальная функция</h5>
+    <p>Эта платформа объединяет данные о МКС, астрономические события и научные исследования NASA OSDR.</p>
+    <ul>
+        <li>Отслеживание МКС в реальном времени</li>
+        <li>Астрономические события через AstronomyAPI</li>
+        <li>База данных научных исследований NASA</li>
+        <li>Кэширование космических данных (APOD, NEO, DONKI)</li>
+    </ul>
+</div>', TRUE),
+('dashboard_info', 'Информация о платформе', 
+'<div class="alert alert-primary">
+    <h5><i class="bi bi-info-circle"></i> О платформе Cassiopeia</h5>
+    <p>Cassiopeia — это распределённая платформа для агрегации космических данных.</p>
+    <p>Архитектура: Rust (backend API) + PHP/Laravel (frontend) + PostgreSQL + Redis</p>
+</div>', TRUE)
+ON CONFLICT (slug) DO NOTHING;
+
 -- Комментарии для документации
 COMMENT ON TABLE iss_fetch_log IS 'Логи запросов к ISS API с партицированием по дням';
 COMMENT ON TABLE osdr_items IS 'Данные из NASA OSDR (Open Science Data Repository)';
@@ -171,7 +205,7 @@ COMMENT ON TABLE cms_pages IS 'Статические страницы CMS';
 DO $$
 BEGIN
     RAISE NOTICE '=== Database initialization completed ===';
-    RAISE NOTICE 'Tables: iss_fetch_log (partitioned), osdr_items, space_cache, telemetry_legacy, cms_pages';
+    RAISE NOTICE 'Tables: iss_fetch_log (partitioned), osdr_items, space_cache, telemetry_legacy, cms_pages, cms_blocks';
     RAISE NOTICE 'Indexes: Created for all tables';
     RAISE NOTICE 'Materialized View: dashboard_metrics';
     RAISE NOTICE 'Functions: cleanup_old_data(), update_updated_at_column()';
