@@ -16,7 +16,6 @@ class IssController extends Controller
     {
         $base = $this->base();
 
-        // Fetch latest ISS data with caching
         $latest = Cache::remember('iss_latest', 30, function () use ($base) {
             try {
                 $response = @file_get_contents($base . '/api/iss/latest');
@@ -26,7 +25,6 @@ class IssController extends Controller
             }
         });
 
-        // Fetch trend data
         $trend = Cache::remember('iss_trend', 60, function () use ($base) {
             try {
                 $response = @file_get_contents($base . '/api/iss/trend?hours=24');
@@ -36,7 +34,6 @@ class IssController extends Controller
             }
         });
 
-        // Extract data from response
         $issData = $latest['data'] ?? $latest['payload'] ?? $latest;
         $trendData = $trend['data'] ?? $trend;
 

@@ -4,23 +4,27 @@
 <div class="container pb-5">
   {{-- верхние карточки --}}
   <div class="row g-3 mb-2">
-    <div class="col-6 col-md-3"><div class="border rounded p-2 text-center">
+    <div class="col-6 col-md-3"><div class="border rounded p-2 text-center stat-card">
       <div class="small text-muted">Скорость МКС</div>
-      <div class="fs-4">{{ isset(($iss['payload'] ?? [])['velocity']) ? number_format($iss['payload']['velocity'],0,'',' ') : '—' }}</div>
+      <div class="fs-4" id="issSpeed">{{ isset(($iss['payload'] ?? [])['velocity']) ? number_format($iss['payload']['velocity'],0,'',' ') : '—' }}</div>
     </div></div>
-    <div class="col-6 col-md-3"><div class="border rounded p-2 text-center">
+    <div class="col-6 col-md-3"><div class="border rounded p-2 text-center stat-card">
       <div class="small text-muted">Высота МКС</div>
-      <div class="fs-4">{{ isset(($iss['payload'] ?? [])['altitude']) ? number_format($iss['payload']['altitude'],0,'',' ') : '—' }}</div>
+      <div class="fs-4" id="issAlt">{{ isset(($iss['payload'] ?? [])['altitude']) ? number_format($iss['payload']['altitude'],0,'',' ') : '—' }}</div>
     </div></div>
   </div>
 
   <div class="row g-3">
-    {{-- левая колонка: JWST наблюдение (как раньше было под APOD можно держать своим блоком) --}}
+    {{-- левая колонка: JWST наблюдение --}}
     <div class="col-lg-7">
       <div class="card shadow-sm h-100">
         <div class="card-body">
-          <h5 class="card-title">JWST — выбранное наблюдение</h5>
-          <div class="text-muted">Этот блок остаётся как был (JSON/сводка). Основная галерея ниже.</div>
+          <h5 class="card-title">
+            <i class="bi bi-telescope me-2"></i>JWST — выбранное наблюдение
+          </h5>
+          <div id="jwstObservation" class="mt-3">
+            <div class="text-muted">Загрузка данных JWST...</div>
+          </div>
         </div>
       </div>
     </div>
@@ -101,45 +105,209 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', async function () {
-  // ====== карта и графики МКС (как раньше) ======
+  // ====== карта и графики МКС ======
   if (typeof L !== 'undefined' && typeof Chart !== 'undefined') {
     const last = @json(($iss['payload'] ?? []));
     let lat0 = Number(last.latitude || 0), lon0 = Number(last.longitude || 0);
+    
+    // Иконка МКС
+    const issIcon = L.icon({
+      iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/International_Space_Station.svg',
+      iconSize: [50, 30],
+      iconAnchor: [25, 15]
+    });
+    
     const map = L.map('map', { attributionControl:false }).setView([lat0||0, lon0||0], lat0?3:2);
     L.tileLayer('https://{s}.tile.openstreetmap.de/{z}/{x}/{y}.png', { noWrap:true }).addTo(map);
-    const trail  = L.polyline([], {weight:3}).addTo(map);
-    const marker = L.marker([lat0||0, lon0||0]).addTo(map).bindPopup('МКС');
+    
+    // Массивы для хранения истории точек
+    let trajectoryPoints = lat0 && lon0 ? [[lat0, lon0]] : [];
+    let speedHistory = [];
+    let altHistory = [];
+    let timeLabels = [];
+    
+    const trail = L.polyline(trajectoryPoints, {color:'#0d6efd', weight:3, opacity:0.7, dashArray:'5,10'}).addTo(map);
+    const marker = L.marker([lat0||0, lon0||0], { icon: issIcon }).addTo(map).bindPopup('МКС');
 
     const speedChart = new Chart(document.getElementById('issSpeedChart'), {
-      type: 'line', data: { labels: [], datasets: [{ label: 'Скорость', data: [] }] },
-      options: { responsive: true, scales: { x: { display: false } } }
+      type: 'line', 
+      data: { 
+        labels: [], 
+        datasets: [{ 
+          label: 'Скорость (км/ч)', 
+          data: [],
+          borderColor: '#198754',
+          backgroundColor: 'rgba(25, 135, 84, 0.1)',
+          fill: true,
+          tension: 0.3
+        }] 
+      },
+      options: { 
+        responsive: true, 
+        maintainAspectRatio: false,
+        scales: { 
+          x: { display: false },
+          y: { beginAtZero: false }
+        },
+        plugins: {
+          legend: { display: true, position: 'top' }
+        }
+      }
     });
+    
     const altChart = new Chart(document.getElementById('issAltChart'), {
-      type: 'line', data: { labels: [], datasets: [{ label: 'Высота', data: [] }] },
-      options: { responsive: true, scales: { x: { display: false } } }
+      type: 'line', 
+      data: { 
+        labels: [], 
+        datasets: [{ 
+          label: 'Высота (км)', 
+          data: [],
+          borderColor: '#dc3545',
+          backgroundColor: 'rgba(220, 53, 69, 0.1)',
+          fill: true,
+          tension: 0.3
+        }] 
+      },
+      options: { 
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { 
+          x: { display: false },
+          y: { beginAtZero: false }
+        },
+        plugins: {
+          legend: { display: true, position: 'top' }
+        }
+      }
     });
 
-    async function loadTrend() {
+    async function updateISS() {
       try {
-        const r = await fetch('/api/iss/trend?limit=240');
-        const js = await r.json();
-        const pts = Array.isArray(js.points) ? js.points.map(p => [p.lat, p.lon]) : [];
-        if (pts.length) {
-          trail.setLatLngs(pts);
-          marker.setLatLng(pts[pts.length-1]);
+        // Получение последних данных
+        const rLatest = await fetch('/api/iss/latest');
+        const jsLatest = await rLatest.json();
+        
+        if (jsLatest.ok && jsLatest.data) {
+          const iss = jsLatest.data;
+          const newLat = parseFloat(iss.latitude);
+          const newLon = parseFloat(iss.longitude);
+          const vel = parseFloat(iss.velocity);
+          const alt = parseFloat(iss.altitude);
+          const timestamp = new Date().toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'});
+          
+          // Обновление карточек вверху страницы
+          document.getElementById('issSpeed').textContent = vel.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+          document.getElementById('issAlt').textContent = alt.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+          
+          // Добавление новой точки в траекторию (максимум 20 точек)
+          trajectoryPoints.push([newLat, newLon]);
+          if (trajectoryPoints.length > 20) {
+            trajectoryPoints.shift();
+          }
+          trail.setLatLngs(trajectoryPoints);
+          
+          // Обновление маркера
+          marker.setLatLng([newLat, newLon]);
+          marker.setPopupContent(`<b>МКС</b><br>Широта: ${newLat.toFixed(4)}°<br>Долгота: ${newLon.toFixed(4)}°<br>Высота: ${alt.toFixed(1)} км<br>Скорость: ${vel.toFixed(0)} км/ч`);
+          map.panTo([newLat, newLon]);
+          
+          // Добавление данных в историю графиков (максимум 30 точек)
+          timeLabels.push(timestamp);
+          speedHistory.push(vel);
+          altHistory.push(alt);
+          
+          if (timeLabels.length > 30) {
+            timeLabels.shift();
+            speedHistory.shift();
+            altHistory.shift();
+          }
+          
+          // Обновление графиков
+          speedChart.data.labels = timeLabels;
+          speedChart.data.datasets[0].data = speedHistory;
+          speedChart.update();
+          
+          altChart.data.labels = timeLabels;
+          altChart.data.datasets[0].data = altHistory;
+          altChart.update();
         }
-        const t = (js.points||[]).map(p => new Date(p.at).toLocaleTimeString());
-        speedChart.data.labels = t;
-        speedChart.data.datasets[0].data = (js.points||[]).map(p => p.velocity);
-        speedChart.update();
-        altChart.data.labels = t;
-        altChart.data.datasets[0].data = (js.points||[]).map(p => p.altitude);
-        altChart.update();
-      } catch(e) {}
+        
+      } catch(e) {
+        console.error('Ошибка обновления МКС:', e);
+      }
     }
-    loadTrend();
-    setInterval(loadTrend, 15000);
+    
+    // Первоначальная загрузка трендовых данных для инициализации графиков
+    async function initializeCharts() {
+      try {
+        const r = await fetch('/api/iss/trend?hours=2');
+        const js = await r.json();
+        if (js.ok && js.data && js.data.length > 0) {
+          // Заполнение начальных данных из тренда
+          js.data.reverse().forEach(point => {
+            const hour = point.hour.substring(11, 16); // Берем только время HH:MM
+            timeLabels.push(hour);
+            speedHistory.push(point.avg_velocity);
+            altHistory.push(point.avg_altitude);
+          });
+          
+          speedChart.data.labels = timeLabels;
+          speedChart.data.datasets[0].data = speedHistory;
+          speedChart.update();
+          
+          altChart.data.labels = timeLabels;
+          altChart.data.datasets[0].data = altHistory;
+          altChart.update();
+        }
+      } catch(e) {
+        console.error('Ошибка инициализации графиков:', e);
+      }
+    }
+    
+    // Инициализация
+    await initializeCharts();
+    
+    // Первое обновление через 60 секунд
+    setTimeout(updateISS, 60000);
+    
+    // Автообновление каждые 60 секунд (1 минута)
+    setInterval(updateISS, 60000);
   }
+
+  // ====== JWST Наблюдение (верхний блок) ======
+  const jwstObs = document.getElementById('jwstObservation');
+  async function loadJWSTObservation() {
+    try {
+      const r = await fetch('/api/jwst/feed?source=jpg&perPage=1&instrument=NIRCam');
+      const js = await r.json();
+      if (js.items && js.items.length > 0) {
+        const item = js.items[0];
+        jwstObs.innerHTML = `
+          <div class="row">
+            <div class="col-md-5">
+              <img src="${item.url}" class="img-fluid rounded" alt="JWST">
+            </div>
+            <div class="col-md-7">
+              <h6 class="mt-2">Последнее изображение NIRCam</h6>
+              <p class="small text-muted">${item.caption || 'Изображение телескопа Джеймса Уэбба'}</p>
+              <div class="small">
+                <strong>Источник:</strong> ${js.source || 'JWST Archive'}<br>
+                <strong>Инструмент:</strong> NIRCam<br>
+                <a href="${item.link || item.url}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
+                  <i class="bi bi-box-arrow-up-right me-1"></i>Открыть в полном размере
+                </a>
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        jwstObs.innerHTML = '<div class="text-muted">Нет доступных изображений JWST</div>';
+      }
+    } catch(e) {
+      jwstObs.innerHTML = '<div class="text-danger">Ошибка загрузки данных JWST</div>';
+    }
+  }
+  loadJWSTObservation();
 
   // ====== JWST ГАЛЕРЕЯ ======
   const track = document.getElementById('jwstTrack');

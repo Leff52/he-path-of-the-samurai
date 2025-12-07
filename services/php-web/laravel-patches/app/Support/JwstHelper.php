@@ -37,7 +37,6 @@ final class JwstHelper
         return is_array($j) ? $j : [];
     }
 
-    /** ищем первую пригодную картинку в произвольной структуре */
     public static function pickImageUrl(array $v): ?string
     {
         $stack = [$v];

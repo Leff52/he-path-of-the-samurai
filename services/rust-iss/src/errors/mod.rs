@@ -53,7 +53,6 @@ impl fmt::Display for ApiError {
 
 impl std::error::Error for ApiError {}
 
-/// Response envelope with ok: false for errors
 #[derive(Debug, Serialize)]
 struct ErrorEnvelope {
     ok: bool,
@@ -62,7 +61,6 @@ struct ErrorEnvelope {
 
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
-        // Всегда возвращаем HTTP 200 с ok: false внутри
         let envelope = ErrorEnvelope {
             ok: false,
             error: self,

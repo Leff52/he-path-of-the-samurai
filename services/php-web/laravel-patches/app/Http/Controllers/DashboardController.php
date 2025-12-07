@@ -17,10 +17,9 @@ class DashboardController extends Controller
 
     public function index()
     {
-        // минимум: карта МКС и пустые контейнеры, JWST-галерея подтянется через /api/jwst/feed
         $b     = $this->base();
         $iss   = $this->getJson($b.'/last');
-        $trend = []; // фронт сам заберёт /api/iss/trend (через nginx прокси)
+        $trend = [];
 
         return view('dashboard', [
             'iss' => $iss,
@@ -37,16 +36,6 @@ class DashboardController extends Controller
             ],
         ]);
     }
-
-    /**
-     * /api/jwst/feed — серверный прокси/нормализатор JWST картинок.
-     * QS:
-     *  - source: jpg|suffix|program (default jpg)
-     *  - suffix: напр. _cal, _thumb, _crf
-     *  - program: ID программы (число)
-     *  - instrument: NIRCam|MIRI|NIRISS|NIRSpec|FGS
-     *  - page, perPage
-     */
     public function jwstFeed(Request $r)
     {
         $src   = $r->query('source', 'jpg');

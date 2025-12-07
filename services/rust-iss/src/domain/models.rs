@@ -2,7 +2,6 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-/// ISS position fetch log - raw data from WhereTheISS API
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IssFetchLog {
     pub id: i64,
@@ -43,7 +42,6 @@ impl IssFetchLog {
     }
 }
 
-/// Aggregated ISS trend data by hour
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IssTrend {
     pub hour: String,
@@ -54,7 +52,6 @@ pub struct IssTrend {
     pub cnt: i64,
 }
 
-/// NASA Open Science Data Repository item
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OsdrItem {
     pub id: i64,
@@ -68,7 +65,6 @@ pub struct OsdrItem {
     pub raw: Value,
 }
 
-/// Cached space data from external APIs
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SpaceCache {
     pub id: i64,
@@ -77,7 +73,6 @@ pub struct SpaceCache {
     pub payload: Value,
 }
 
-/// Health check response
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Health {
     pub status: String,

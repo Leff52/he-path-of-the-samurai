@@ -7,12 +7,9 @@ use App\Models\CmsPage;
 
 class CmsRepository
 {
-    /**
-     * Получение страницы по slug с защитой от SQL injection и XSS
-     */
     public function findBySlug(string $slug): ?CmsPage
     {
-        // Валидация slug (только буквы, цифры, дефис)
+        // (только буквы, цифры, дефис)
         if (!preg_match('/^[a-z0-9\-]+$/', $slug)) {
             return null;
         }
@@ -39,9 +36,6 @@ class CmsRepository
         );
     }
     
-    /**
-     * Получение всех активных страниц
-     */
     public function getAllActive(): array
     {
         $rows = DB::select(
@@ -64,10 +58,6 @@ class CmsRepository
         }, $rows);
     }
     
-    /**
-     * Санитизация HTML для защиты от XSS
-     * Разрешаем только безопасные теги
-     */
     private function sanitizeHtml(string $html): string
     {
         $allowedTags = '<p><a><b><i><strong><em><br><ul><ol><li><h1><h2><h3><h4><h5><h6><blockquote><code><pre>';
@@ -76,7 +66,6 @@ class CmsRepository
         $clean = strip_tags($html, $allowedTags);
         
         // Дополнительная очистка через htmlspecialchars для атрибутов
-        // (но сохраняем структуру HTML)
         return $clean;
     }
     
@@ -103,9 +92,7 @@ class CmsRepository
         return $this->findBySlug($slug);
     }
     
-    /**
-     * Обновление страницы
-     */
+    //
     public function update(string $slug, string $title, string $body): bool
     {
         if (!preg_match('/^[a-z0-9\-]+$/', $slug)) {

@@ -20,7 +20,7 @@ Route::get('/osdr',      [OsdrController::class, 'index']);
 Route::prefix('api/iss')->group(function () {
     Route::get('/latest', [ProxyController::class, 'latest']);
     Route::get('/trend',  [ProxyController::class, 'trend']);
-    Route::get('/last',   [ProxyController::class, 'last']); // legacy compatibility
+    Route::get('/last',   [ProxyController::class, 'last']); 
 });
 
 Route::prefix('api/osdr')->group(function () {
