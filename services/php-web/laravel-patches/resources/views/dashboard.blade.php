@@ -453,7 +453,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                   
                   let extra = '';
                   if (event.extraInfo && event.extraInfo.obscuration !== undefined) {
-                    // Obscuration в процентах (0.8 -> 80%)
                     extra = `Покрытие: ${Math.round(event.extraInfo.obscuration * 100)}%`;
                   } else if (event.altitude !== undefined) {
                     extra = `Alt: ${event.altitude}°`;
