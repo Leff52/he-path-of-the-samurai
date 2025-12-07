@@ -529,6 +529,156 @@ document.addEventListener('DOMContentLoaded', async function () {
         load({lat: form.lat.value, lon: form.lon.value, days: form.days.value, limit: form.limit.value});
       });
     </script>
+
+    <!-- Позиции планет -->
+    <div class="col-12 mt-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="card-title m-0">🪐 Позиции небесных тел</h5>
+            <button id="refreshPositions" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-arrow-clockwise me-1"></i>Обновить
+            </button>
+          </div>
+          
+          <div id="planetsGrid" class="row g-3">
+            <div class="col-12 text-center text-muted py-4">Загрузка данных о планетах...</div>
+          </div>
+          
+          <div class="mt-3 small text-muted text-center" id="positionsInfo"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const grid = document.getElementById('planetsGrid');
+        const info = document.getElementById('positionsInfo');
+        const refreshBtn = document.getElementById('refreshPositions');
+        
+        const allowedBodies = ['sun', 'moon', 'earth', 'mars'];
+        
+        const planetIcons = {
+          sun: '☀️', moon: '🌙', earth: '🌍', mars: '♂️'
+        };
+        
+        const planetNames = {
+          sun: 'Солнце', moon: 'Луна', earth: 'Земля', mars: 'Марс'
+        };
+        
+        const planetColors = {
+          sun: '#FFD700', moon: '#C0C0C0', earth: '#6B93D6', mars: '#CD5C5C'
+        };
+        
+        async function loadPositions() {
+          grid.innerHTML = '<div class="col-12 text-center py-4"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Загрузка...</div>';
+          
+          try {
+            const r = await fetch('/api/astro/positions?lat=55.7558&lon=37.6176&days=1');
+            const js = await r.json();
+            
+            if (js.error) {
+              grid.innerHTML = `<div class="col-12 text-danger text-center py-4">${js.error}</div>`;
+              return;
+            }
+            
+            const allRows = js.data?.table?.rows || [];
+            const rows = allRows.filter(row => allowedBodies.includes(row.entry?.id));
+            
+            if (!rows.length) {
+              grid.innerHTML = '<div class="col-12 text-muted text-center py-4">Нет данных о позициях</div>';
+              return;
+            }
+            
+            grid.innerHTML = rows.map(row => {
+              const id = row.entry?.id || 'unknown';
+              const name = planetNames[id] || row.entry?.name || id;
+              const icon = planetIcons[id] || '🌟';
+              const color = planetColors[id] || '#6c757d';
+              const cell = row.cells?.[0] || {};
+              
+              const pos = cell.position?.equatorial || {};
+              const ra = pos.rightAscension?.string || '—';
+              const dec = pos.declination?.string || '—';
+              const constellation = cell.position?.constellation?.name || '—';
+              const distance = cell.distance?.fromEarth?.km 
+                ? (parseFloat(cell.distance.fromEarth.km) / 1000000).toFixed(2) + ' млн км'
+                : cell.distance?.fromEarth?.au + ' а.е.' || '—';
+              const magnitude = cell.extraInfo?.magnitude?.toFixed(2) || '—';
+              
+              let phaseInfo = '';
+              if (id === 'moon' && cell.extraInfo?.phase) {
+                const phase = cell.extraInfo.phase;
+                const phaseNames = {
+                  'New Moon': '🌑 Новолуние',
+                  'Waxing Crescent': '🌒 Растущий серп',
+                  'First Quarter': '🌓 Первая четверть',
+                  'Waxing Gibbous': '🌔 Растущая луна',
+                  'Full Moon': '🌕 Полнолуние',
+                  'Waning Gibbous': '🌖 Убывающая луна',
+                  'Last Quarter': '🌗 Последняя четверть',
+                  'Waning Crescent': '🌘 Убывающий серп'
+                };
+                phaseInfo = `<div class="mt-2 p-2 bg-dark bg-opacity-10 rounded">
+                  <strong>${phaseNames[phase.string] || phase.string}</strong>
+                  <div class="small">Освещённость: ${(parseFloat(phase.fraction) * 100).toFixed(1)}%</div>
+                </div>`;
+              }
+              
+              return `
+                <div class="col-6 col-md-4 col-lg-3">
+                  <div class="card h-100 border-0 shadow-sm" style="border-left: 4px solid ${color} !important; border-left-style: solid !important;">
+                    <div class="card-body p-3">
+                      <div class="d-flex align-items-center mb-2">
+                        <span class="fs-3 me-2">${icon}</span>
+                        <h6 class="card-title mb-0">${name}</h6>
+                      </div>
+                      <div class="small">
+                        <div class="d-flex justify-content-between">
+                          <span class="text-muted">Созвездие:</span>
+                          <strong>${constellation}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                          <span class="text-muted">Расстояние:</span>
+                          <span>${distance}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                          <span class="text-muted">Магнитуда:</span>
+                          <span>${magnitude}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                          <span class="text-muted">RA:</span>
+                          <span class="font-monospace">${ra}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                          <span class="text-muted">Dec:</span>
+                          <span class="font-monospace">${dec}</span>
+                        </div>
+                      </div>
+                      ${phaseInfo}
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('');
+            
+            const date = js.data?.dates?.from;
+            info.textContent = date ? `Данные на: ${new Date(date).toLocaleString('ru-RU')} · Координаты: Москва (55.76°N, 37.62°E) · Обновление каждую минуту` : '';
+            
+          } catch(e) {
+            console.error('Positions error:', e);
+            grid.innerHTML = `<div class="col-12 text-danger text-center py-4">Ошибка: ${e.message}</div>`;
+          }
+        }
+        
+        refreshBtn.addEventListener('click', loadPositions);
+        
+        // Первая загрузка
+        loadPositions();
+        
+        // Автообновление каждую минуту
+        setInterval(loadPositions, 60000);
+      });
     </script>
 
 
