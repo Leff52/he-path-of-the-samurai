@@ -5,17 +5,18 @@ volumes:
   pgdata:
   appdata:
   csvdata:
+  redis_data:
 
 services:
   db:
     image: postgres:16
     container_name: iss_db
     environment:
-      POSTGRES_DB: monolith
-      POSTGRES_USER: monouser
-      POSTGRES_PASSWORD: monopass
+      POSTGRES_DB: iss_osdr
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U monouser -d monolith"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d iss_osdr"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -27,12 +28,28 @@ services:
     ports:
       - "5432:5432"
 
+  redis:
+    image: redis:7-alpine
+    container_name: redis_cache
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend
+    ports:
+      - "6379:6379"
+
   rust_iss:
     build:
       context: ./services/rust-iss
     container_name: rust_iss
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgres://monouser:monopass@db:5432/monolith}
+      DATABASE_URL: ${DATABASE_URL:-postgres://postgres:postgres@db:5432/iss_osdr}
       NASA_API_URL: ${NASA_API_URL:-}
       NASA_API_KEY: ${NASA_API_KEY:-}
       FETCH_EVERY_SECONDS: ${FETCH_EVERY_SECONDS:-600}
@@ -62,9 +79,12 @@ services:
       DB_CONNECTION: pgsql
       DB_HOST: db
       DB_PORT: 5432
-      DB_DATABASE: monolith
-      DB_USERNAME: monouser
-      DB_PASSWORD: monopass
+      DB_DATABASE: iss_osdr
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      CACHE_STORE: file
+      SESSION_DRIVER: file
+      RUST_API_URL: http://rust_iss:3000
     depends_on:
       db:
         condition: service_healthy
