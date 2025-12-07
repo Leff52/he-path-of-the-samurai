@@ -6,7 +6,7 @@
     <h3 class="mb-0">
       <i class="bi bi-database me-2"></i>NASA Open Science Data Repository
     </h3>
-    <span class="badge bg-primary">{{ count($items ?? []) }} датасетов</span>
+    <span class="badge bg-primary">{{ $total ?? count($items ?? []) }} датасетов</span>
   </div>
 
   {{-- Поиск и фильтры --}}

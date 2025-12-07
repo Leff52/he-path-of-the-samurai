@@ -194,6 +194,30 @@ INSERT INTO cms_blocks (slug, title, content, is_active) VALUES
 </div>', TRUE)
 ON CONFLICT (slug) DO NOTHING;
 
+-- Тестовые данные для OSDR (NASA Open Science Data Repository)
+INSERT INTO osdr_items (dataset_id, title, organism, study_type, status, updated_at, raw) VALUES
+('OSD-37', 'Spaceflight-induced Molecular Changes in Mouse Brain', 'Mus musculus', 'Transcriptomics', 'Active', NOW() - INTERVAL '2 days', '{"accession": "OSD-37", "doi": "10.26030/example1"}'::jsonb),
+('OSD-48', 'Gene Expression in Arabidopsis Under Microgravity', 'Arabidopsis thaliana', 'RNA Sequencing', 'Active', NOW() - INTERVAL '5 days', '{"accession": "OSD-48", "doi": "10.26030/example2"}'::jsonb),
+('OSD-120', 'Caenorhabditis elegans Muscle Development in Space', 'Caenorhabditis elegans', 'Proteomics', 'Completed', NOW() - INTERVAL '10 days', '{"accession": "OSD-120", "doi": "10.26030/example3"}'::jsonb),
+('OSD-169', 'Immune System Response in Astronauts During Long-Duration Spaceflight', 'Homo sapiens', 'Immunology', 'Active', NOW() - INTERVAL '1 day', '{"accession": "OSD-169", "doi": "10.26030/example4"}'::jsonb),
+('OSD-205', 'Microbial Communities on ISS Surfaces Over Time', 'Bacteria', 'Metagenomics', 'Active', NOW() - INTERVAL '3 days', '{"accession": "OSD-205", "doi": "10.26030/example5"}'::jsonb),
+('OSD-242', 'Bone Density Changes in Rodents During Spaceflight', 'Rattus norvegicus', 'Bone Biology', 'Completed', NOW() - INTERVAL '15 days', '{"accession": "OSD-242", "doi": "10.26030/example6"}'::jsonb),
+('OSD-289', 'Cardiac Function in Microgravity Conditions', 'Mus musculus', 'Cardiovascular', 'Active', NOW() - INTERVAL '7 days', '{"accession": "OSD-289", "doi": "10.26030/example7"}'::jsonb),
+('OSD-316', 'Plant Growth Responses to Cosmic Radiation', 'Zea mays', 'Plant Biology', 'Active', NOW() - INTERVAL '4 days', '{"accession": "OSD-316", "doi": "10.26030/example8"}'::jsonb),
+('OSD-347', 'Yeast Cell Division in Space Environment', 'Saccharomyces cerevisiae', 'Cell Biology', 'Completed', NOW() - INTERVAL '20 days', '{"accession": "OSD-347", "doi": "10.26030/example9"}'::jsonb),
+('OSD-398', 'Drosophila Development and Aging in Microgravity', 'Drosophila melanogaster', 'Developmental Biology', 'Active', NOW() - INTERVAL '6 days', '{"accession": "OSD-398", "doi": "10.26030/example10"}'::jsonb),
+('OSD-421', 'Algae Photosynthesis Under Space Conditions', 'Chlorella vulgaris', 'Photosynthesis', 'Active', NOW() - INTERVAL '8 days', '{"accession": "OSD-421", "doi": "10.26030/example11"}'::jsonb),
+('OSD-456', 'Nematode Behavior and Neural Activity in Zero Gravity', 'Caenorhabditis elegans', 'Neuroscience', 'Completed', NOW() - INTERVAL '25 days', '{"accession": "OSD-456", "doi": "10.26030/example12"}'::jsonb),
+('OSD-489', 'Fungal Growth on ISS Materials', 'Aspergillus niger', 'Mycology', 'Active', NOW() - INTERVAL '12 days', '{"accession": "OSD-489", "doi": "10.26030/example13"}'::jsonb),
+('OSD-512', 'Bacterial Antibiotic Resistance in Space', 'Escherichia coli', 'Microbiology', 'Active', NOW() - INTERVAL '5 days', '{"accession": "OSD-512", "doi": "10.26030/example14"}'::jsonb),
+('OSD-537', 'Tomato Cultivation in Microgravity', 'Solanum lycopersicum', 'Agriculture', 'Active', NOW() - INTERVAL '9 days', '{"accession": "OSD-537", "doi": "10.26030/example15"}'::jsonb),
+('OSD-568', 'Tissue Engineering in Space Conditions', 'Homo sapiens', 'Tissue Engineering', 'Active', NOW() - INTERVAL '11 days', '{"accession": "OSD-568", "doi": "10.26030/example16"}'::jsonb),
+('OSD-594', 'Zebrafish Embryo Development During Spaceflight', 'Danio rerio', 'Embryology', 'Completed', NOW() - INTERVAL '18 days', '{"accession": "OSD-594", "doi": "10.26030/example17"}'::jsonb),
+('OSD-623', 'Soil Microbiome Analysis for Lunar Agriculture', 'Soil microbiota', 'Astrobiology', 'Active', NOW() - INTERVAL '13 days', '{"accession": "OSD-623", "doi": "10.26030/example18"}'::jsonb),
+('OSD-651', 'Protein Crystal Growth in Microgravity', 'Various', 'Crystallography', 'Active', NOW() - INTERVAL '16 days', '{"accession": "OSD-651", "doi": "10.26030/example19"}'::jsonb),
+('OSD-682', 'Radiation Effects on Human Cells in Deep Space Simulation', 'Homo sapiens', 'Radiation Biology', 'Active', NOW() - INTERVAL '14 days', '{"accession": "OSD-682", "doi": "10.26030/example20"}'::jsonb)
+ON CONFLICT (dataset_id) DO NOTHING;
+
 -- Комментарии для документации
 COMMENT ON TABLE iss_fetch_log IS 'Логи запросов к ISS API с партицированием по дням';
 COMMENT ON TABLE osdr_items IS 'Данные из NASA OSDR (Open Science Data Repository)';

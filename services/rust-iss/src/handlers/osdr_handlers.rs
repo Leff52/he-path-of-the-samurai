@@ -41,8 +41,10 @@ pub async fn list_datasets<R: OsdrRepository>(
     let limit = query.limit.clamp(1, 100);
     let offset = query.offset.max(0);
 
-    match svc.list(limit, offset, query.search).await {
+    match svc.list(limit, offset, query.search.clone()).await {
         Ok(items) => {
+            let total = svc.count().await.unwrap_or(0);
+            
             let data: Vec<Value> = items
                 .into_iter()
                 .map(|item| json!({
@@ -59,6 +61,7 @@ pub async fn list_datasets<R: OsdrRepository>(
                 ok: true,
                 data: Some(json!({
                     "items": data,
+                    "total": total,
                     "limit": limit,
                     "offset": offset,
                 })),
