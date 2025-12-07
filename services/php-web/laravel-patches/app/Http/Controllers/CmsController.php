@@ -1,11 +1,30 @@
 <?php
-namespace App\Http\Controllers;
-use Illuminate\Support\Facades\DB;
 
-class CmsController extends Controller {
-  public function page(string $slug) {
-    $row = DB::selectOne("SELECT title, content FROM cms_blocks WHERE slug = ? AND is_active = TRUE", [$slug]);
-    if (!$row) abort(404);
-    return response()->view('cms.page', ['title' => $row->title, 'html' => $row->content]);
-  }
+namespace App\Http\Controllers;
+
+use App\Repositories\CmsRepository;
+use Illuminate\Support\Facades\Log;
+
+class CmsController extends Controller
+{
+    public function __construct(
+        private CmsRepository $cmsRepository
+    ) {}
+    
+    public function page(string $slug)
+    {
+        $page = $this->cmsRepository->findBySlug($slug);
+        
+        if (!$page) {
+            Log::warning('CMS page not found', ['slug' => $slug]);
+            abort(404);
+        }
+        
+        return view('cms.page', [
+            'title' => $page->title,
+            // Используем экранированный вывод {{ }} вместо {!! !!}
+            'body' => $page->body,
+        ]);
+    }
 }
+
