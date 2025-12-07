@@ -50,9 +50,34 @@ Route::get('/api/astro/debug', [AstroController::class, 'debug']);
 Route::get('/page/{slug}', [CmsController::class, 'page'])
     ->where('slug', '[a-z0-9\-]+');
 
-// Health endpoint
-Route::get('/health', fn() => response()->json([
-    'ok' => true,
-    'service' => 'php-web',
-    'timestamp' => now()->toIso8601String(),
-]));
+Route::get('/health', fn() => view('health'));
+
+// Health API endpoints
+Route::get('/api/health/db', function () {
+    try {
+        \DB::connection()->getPdo();
+        $version = \DB::selectOne('SELECT version()');
+        return response()->json([
+            'ok' => true,
+            'version' => $version->version ?? 'unknown'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json(['ok' => false, 'error' => $e->getMessage()], 500);
+    }
+});
+
+Route::get('/api/health/nasa', function () {
+    try {
+        $key = getenv('NASA_API_KEY') ?: 'DEMO_KEY';
+        $response = \Http::timeout(5)->get('https://api.nasa.gov/planetary/apod', [
+            'api_key' => $key,
+            'thumbs' => 'true'
+        ]);
+        return response()->json([
+            'ok' => $response->successful(),
+            'status' => $response->status()
+        ]);
+    } catch (\Exception $e) {
+        return response()->json(['ok' => false, 'error' => $e->getMessage()], 500);
+    }
+});
