@@ -7,6 +7,7 @@ use App\Http\Controllers\IssController;
 use App\Http\Controllers\ProxyController;
 use App\Http\Controllers\AstroController;
 use App\Http\Controllers\CmsController;
+use App\Http\Controllers\SpaceController;
 
 // Главная -> Dashboard
 Route::get('/', fn() => redirect('/dashboard'));
@@ -15,6 +16,12 @@ Route::get('/', fn() => redirect('/dashboard'));
 Route::get('/dashboard', [DashboardController::class, 'index']);
 Route::get('/iss',       [IssController::class, 'index']);
 Route::get('/osdr',      [OsdrController::class, 'index']);
+
+// Space Data страницы
+Route::get('/apod',   [SpaceController::class, 'apod']);
+Route::get('/neo',    [SpaceController::class, 'neo']);
+Route::get('/donki',  [SpaceController::class, 'donki']);
+Route::get('/spacex', [SpaceController::class, 'spacex']);
 
 // Прокси к Rust backend
 Route::prefix('api/iss')->group(function () {
