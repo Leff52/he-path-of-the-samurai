@@ -78,12 +78,3 @@ docker compose up -d --build
 **SpaceX Launches**: http://localhost:8080/spacex
 
 **API Health**: http://localhost:8080/health
-
-## Мониторинг и отладка
-
-Все сервисы логируют в stdout/stderr для агрегации через Docker logs. Rust-бэкенд использует tracing с уровнями debug/info/warn/error. Laravel настроен на APP_DEBUG=true в dev-окружении с детальными stack traces. PostgreSQL логирует slow queries > 1000ms для оптимизации индексов.
-
-Метрики производительности доступны через Laravel Telescope (опционально). Redis мониторится через MONITOR команду для анализа cache hit rate. Nginx access logs содержат response time и upstream address для профилирования узких мест.
-
-
-
