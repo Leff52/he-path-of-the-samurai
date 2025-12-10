@@ -16,6 +16,7 @@ Route::get('/', fn() => redirect('/dashboard'));
 Route::get('/dashboard', [DashboardController::class, 'index']);
 Route::get('/iss',       [IssController::class, 'index']);
 Route::get('/osdr',      [OsdrController::class, 'index']);
+Route::get('/osdr/download', [OsdrController::class, 'downloadCsv']);
 
 // Space Data страницы
 Route::get('/apod',   [SpaceController::class, 'apod']);

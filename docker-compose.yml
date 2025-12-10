@@ -110,13 +110,16 @@ services:
     ports:
       - "8080:80"
 
-  pascal_legacy:
+  python_legacy:
     build:
-      context: ./services/pascal-legacy
-    container_name: pascal_legacy
+      context: ./services/python-legacy
+    container_name: python_legacy
     environment:
       CSV_OUT_DIR: /data/csv
-      GEN_PERIOD_SEC: ${PAS_LEGACY_PERIOD:-300}
+      GEN_PERIOD_SEC: ${GEN_PERIOD_SEC:-300}
+      INITIAL_DELAY_SEC: 15
+      NASA_API_URL: ${NASA_API_URL:-https://visualization.osdr.nasa.gov/biodata/api/v2/datasets/?format=json}
+      NASA_API_KEY: ${NASA_API_KEY:-}
       PGHOST: db
       PGPORT: 5432
       PGUSER: postgres
